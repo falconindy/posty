@@ -5,6 +5,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define CONTINUE 1
+#define BREAK 0
+
 typedef struct __stack_t {
   double data;
   struct __stack_t *next;
@@ -18,23 +21,13 @@ int stack_size = 0;
 int verbose = 0;
 int precision = 3;
 
+/* protos */
 int parse_expression(char*);
 int parse_operator(char);
 stack_t *push(stack_t*, double);
 stack_t *pop(stack_t*);
 stack_t *poptop(stack_t*, double*);
 double top(stack_t*);
-
-static void clearstack() {
-  if (verbose)
-    printf(":: Stack Dump :: ");
-  while (opstack) {
-    if (verbose)
-      printf("%.*f ", precision, top(opstack));
-    opstack = pop(opstack);
-  }
-  putchar('\n');
-}
 
 static char *strtrim(char *str) {
   char *pch = str;
@@ -60,7 +53,22 @@ static char *strtrim(char *str) {
   return str;
 }
 
-/** Stack Operations */
+/** stack operations */
+static void clearstack() {
+  if (opstack == NULL)
+    return;
+
+  if (verbose)
+    printf(":: Stack Dump :: ");
+  while (opstack) {
+    if (verbose)
+      printf("%.*f ", precision, top(opstack));
+    opstack = pop(opstack);
+  }
+  if (verbose)
+    putchar('\n');
+}
+
 stack_t *push(stack_t *stack, double data) {
   stack_t *newnode = malloc(sizeof(stack_t));
   newnode->data = data;
@@ -93,6 +101,8 @@ double top(stack_t *stack) {
 }
 /*********************/
 
+
+/** parse operations */
 int parse_operator(char operator) {
   double op1, op2;
 
@@ -107,6 +117,7 @@ int parse_operator(char operator) {
     case '-': op1 -= op2; break;
     case '*': op1 *= op2; break;
     case '/': op1 /= op2; break;
+    default: return 1;
   }
 
   if (verbose)
@@ -125,8 +136,8 @@ int parse_precision(char *p) {
     return 1;
   } else {
     precision = pre;
-    if (precision < 0)
-      precision = 0;
+    if (precision < 0) /* clamp negative numbers to 0 */
+      precision ^= precision;
     printf(":: Precision set to %d decimal places.\n", precision);
   }
 
@@ -137,26 +148,26 @@ int parse_precision(char *p) {
 int parse_expression(char *expr) {
 
   if (strlen(strtrim(expr)) == 0)
-    return 0;
+    return BREAK;
 
   char *token, *endPtr;
-  const char *operators = "+/*-";
+  static const char *operators = "+/*-";
   double operand;
 
   while ((token = strsep(&expr, " \n"))) {
     if (strlen(token) == 0) continue;
 
-    if (strstr(operators, token) && strlen(token) == 1) { /* Caught an operator */
+    if (strchr(operators, *token) && strlen(token) == 1) { /* Caught an operator */
       if (stack_size < 2) {
-        fprintf(stderr, "! Malformed expression: Insufficient operands.\n");
-        clearstack();
-        return 1;
+        fprintf(stderr, "! Malformed expression -- insufficient operands.\n");
+        return CONTINUE;
       }
-      parse_operator(*token);
+      if (parse_operator(*token) > 0) { /* This should never be executed */
+        fprintf(stderr, "Unknown error occurred in parse_operator for token %s\n", token);
+      }
     } else if (*token == ':') {
       parse_precision(++token);
-      clearstack();
-      return 1;
+      return CONTINUE;
     } else { /* Caught an operand, validate it */
       errno = 0;
       operand = strtod(token, &endPtr);
@@ -167,28 +178,26 @@ int parse_expression(char *expr) {
         if (operand == 0)
           fprintf(stderr, "! Input underflow.\n");
 
-        clearstack();
-        return 1;
+        return CONTINUE;
       }
       if (token + strlen(token) != endPtr) {
         fprintf(stderr, "! Bad input: %s\n", token);
-        clearstack();
-        return 1;
+        return CONTINUE;
       }
       opstack = push(opstack, operand); /* passed validation, push onto stack */
     }
   }
 
-  if (stack_size > 1) {
-    fprintf(stderr, "! Malformed expression: Excess operands.\n");
-    clearstack();
-  } else if (stack_size == 1) {
+  if (stack_size > 1)
+    fprintf(stderr, "! Malformed expression -- excess operands.\n");
+  else if (stack_size == 1) {
     printf(" = %.*f\n", precision, top(opstack));
     opstack = pop(opstack);
   }
 
-  return 1;
+  return CONTINUE;
 }
+/*********************/
 
 int main(int argc, char *argv[]) {
   if (argc > 1 && strcmp(argv[1], "-v") == 0) {
@@ -200,6 +209,7 @@ int main(int argc, char *argv[]) {
   buf = calloc(sizeof(char), BUFSIZ);
 
   do {
+    clearstack();
     printf("> ");
     *buf = '\0';
     fgets(buf, BUFSIZ, stdin);
