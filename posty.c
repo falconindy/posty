@@ -117,6 +117,8 @@ int parse_operator(char operator) {
     case '-': op1 -= op2; break;
     case '*': op1 *= op2; break;
     case '/': op1 /= op2; break;
+    case '%': op1 = (int)op1 % (int)op2; break;
+    case '^': op1 = pow(op1, op2); break;
     default: return 1;
   }
 
@@ -151,7 +153,7 @@ int parse_expression(char *expr) {
     return BREAK;
 
   char *token, *endPtr;
-  static const char *operators = "+/*-";
+  static const char *operators = "+/*-%^";
   double operand;
 
   while ((token = strsep(&expr, " \n"))) {
