@@ -8,28 +8,29 @@
 #define CONTINUE 1
 #define BREAK 0
 
+/* stack declaration *//*{{{*/
 typedef struct __stack_t {
   double data;
   struct __stack_t *next;
 } stack_t;
 
-/* stack declaration */
 stack_t *opstack = NULL;
-int stack_size = 0;
+int stack_size = 0;/*}}}*/
 
-/* default runtime options */
+/* default runtime options *//*{{{*/
 int verbose = 0;
-int precision = 3;
+int precision = 3;/*}}}*/
 
-/* protos */
+/* protos *//*{{{*/
 int parse_expression(char*);
+int parse_operand(char*, double*);
 int parse_operator(char);
 stack_t *push(stack_t*, double);
 stack_t *pop(stack_t*);
 stack_t *poptop(stack_t*, double*);
-double top(stack_t*);
+double top(stack_t*);/*}}}*/
 
-static char *strtrim(char *str) {
+static char *strtrim(char *str) {/*{{{*/
   char *pch = str;
 
   if (str == NULL || *str == '\0')
@@ -51,10 +52,10 @@ static char *strtrim(char *str) {
   *++pch = '\0';
 
   return str;
-}
+}/*}}}*/
 
-/** stack operations */
-static void clearstack() {
+/** stack operations *//*{{{*/
+static void clearstack() {/*{{{*/
   if (opstack == NULL)
     return;
 
@@ -67,9 +68,9 @@ static void clearstack() {
   }
   if (verbose)
     putchar('\n');
-}
+}/*}}}*/
 
-stack_t *push(stack_t *stack, double data) {
+stack_t *push(stack_t *stack, double data) {/*{{{*/
   stack_t *newnode = malloc(sizeof(stack_t));
   newnode->data = data;
   stack_size++;
@@ -80,30 +81,51 @@ stack_t *push(stack_t *stack, double data) {
     newnode->next = stack;
 
   return newnode;
-}
+}/*}}}*/
 
-stack_t *pop(stack_t *stack) {
+stack_t *pop(stack_t *stack) {/*{{{*/
   stack_t *tmpnode = stack->next;
 
   free(stack);
   stack_size--;
 
   return tmpnode;
-}
+}/*}}}*/
 
-stack_t *poptop(stack_t *stack, double *op) {
+stack_t *poptop(stack_t *stack, double *op) {/*{{{*/
   *op = top(stack);
   return pop(stack);
-}
+}/*}}}*/
 
-double top(stack_t *stack) {
+double top(stack_t *stack) {/*{{{*/
   return stack->data;
+}/*}}}*/
+/*}}}*/
+
+/** parse operations *//*{{{*/
+int parse_operand(char *token, double *operand) {
+  char *endPtr;
+
+  errno = 0;
+  *operand = strtod(token, &endPtr);
+  if (errno != 0) {
+    *operand = fabs(*operand);
+    if (*operand == HUGE_VAL)
+      fprintf(stderr, "!! Input overflow.\n");
+    if (*operand == 0)
+      fprintf(stderr, "!! Input underflow.\n");
+
+    return 1;
+  }
+  if (token + strlen(token) != endPtr) {
+    fprintf(stderr, "!! Bad input: %s\n", token);
+    return 1;
+  }
+
+  return 0;
 }
-/*********************/
 
-
-/** parse operations */
-int parse_operator(char operator) {
+int parse_operator(char operator) {/*{{{*/
   double op1, op2;
 
   opstack = poptop(opstack, &op2);
@@ -137,9 +159,9 @@ int parse_operator(char operator) {
   opstack = push(opstack, op1); /* push result back onto stack */
 
   return 0;
-}
+}/*}}}*/
 
-int parse_precision(char *p) {
+int parse_precision(char *p) {/*{{{*/
   char *endPtr;
   int pre = (int)strtol(p, &endPtr, 10);
   if (endPtr != p + strlen(p)) {
@@ -154,14 +176,14 @@ int parse_precision(char *p) {
 
   return 0;
 
-}
+}/*}}}*/
 
-int parse_expression(char *expr) {
+int parse_expression(char *expr) {/*{{{*/
 
   if (strlen(strtrim(expr)) == 0)
     return BREAK;
 
-  char *token, *endPtr;
+  char *token;
   static const char *operators = "+/*-%^";
   double operand;
 
@@ -179,22 +201,10 @@ int parse_expression(char *expr) {
     } else if (*token == ':') {
       parse_precision(++token);
     } else { /* Caught an operand, validate it */
-      errno = 0;
-      operand = strtod(token, &endPtr);
-      if (errno != 0) {
-        operand = fabs(operand);
-        if (operand == HUGE_VAL)
-          fprintf(stderr, "!! Input overflow.\n");
-        if (operand == 0)
-          fprintf(stderr, "!! Input underflow.\n");
+      if (parse_operand(token, &operand) > 0)
+        return CONTINUE;
 
-        return CONTINUE;
-      }
-      if (token + strlen(token) != endPtr) {
-        fprintf(stderr, "!! Bad input: %s\n", token);
-        return CONTINUE;
-      }
-      opstack = push(opstack, operand); /* passed validation, push onto stack */
+      opstack = push(opstack, operand);
     }
   }
 
@@ -206,10 +216,10 @@ int parse_expression(char *expr) {
   }
 
   return CONTINUE;
-}
-/*********************/
+}/*}}}*/
+/*}}}*/
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {/*{{{*/
   if (argc > 1 && strcmp(argv[1], "-v") == 0) {
     fprintf(stderr, "::Stack dumps enabled::\n");
     verbose = 1;
@@ -228,5 +238,5 @@ int main(int argc, char *argv[]) {
   free(buf);
 
   return 0;
-}
+}/*}}}*/
 
