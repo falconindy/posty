@@ -156,6 +156,11 @@ int parse_operator(char operator) {
   if (verbose)
     printf("%c %.*f = %.*f\n", operator, precision, op2, precision, op1);
 
+  if (op1 == HUGE_VAL) {
+    fprintf(stderr, "!! Result overflow\n");
+    return 1;
+  }
+
   opstack = push(opstack, op1); /* push result back onto stack */
 
   return 0;
@@ -195,12 +200,12 @@ int parse_expression(char *expr) {
         fprintf(stderr, "!! Malformed expression -- insufficient operands.\n");
         return CONTINUE;
       }
-      if (parse_operator(*token) > 0) { /* This should never be executed */
+      if (parse_operator(*token) > 0) {
         return CONTINUE;
       }
     } else if (*token == ':') {
       parse_precision(++token);
-    } else { /* Caught an operand, validate it */
+    } else { /* Hope this is an operand */
       if (parse_operand(token, &operand) > 0)
         return CONTINUE;
 
@@ -239,4 +244,3 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
-
