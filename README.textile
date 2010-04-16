@@ -6,7 +6,6 @@ pre. posty [-v]
 	-v	enable stack dumps (for debugging)
 
 In interactive mode, you have two choices:
-* Enter a postfix style expression to be evaluated
-	* Supports +, -, /, *, ^, %
+* Enter a postfix style expression to be evaluated (supports +, -, /, *, ^, %)
 * Enter :N to set decimal precision, where N is the number of digits displayed to the right of the decimal. Note that this can also be part of an expression.
 
