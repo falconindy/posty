@@ -1,5 +1,4 @@
 #include <ctype.h>
-#include <errno.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -106,15 +105,9 @@ double top(stack_t *stack) {
 int parse_operand(char *token, double *operand) {
   char *endPtr;
 
-  errno = 0;
   *operand = strtod(token, &endPtr);
-  if (errno != 0) {
-    *operand = fabs(*operand);
-    if (*operand == HUGE_VAL)
-      fprintf(stderr, "!! Input overflow.\n");
-    if (*operand == 0)
-      fprintf(stderr, "!! Input underflow.\n");
-
+  if (*operand == HUGE_VAL) {
+    fprintf(stderr, "!! Input overflow.\n");
     return 1;
   }
   if (token + strlen(token) != endPtr) {
