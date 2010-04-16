@@ -37,23 +37,25 @@ typedef struct __stack_t {
   struct __stack_t *next;
 } stack_t;
 
-stack_t *opstack = NULL;
-int stack_size = 0;
+static stack_t *opstack = NULL;
+static int stack_size = 0;
 
 /* default runtime options */
-int verbose = 0;
-int precision = 3;
+static int verbose = 0;
+static int precision = 3;
 
 /* protos */
-int parse_expression(char*);
-int parse_operand(char*, double*);
-int parse_operator(char);
-stack_t *push(stack_t*, double);
-stack_t *pop(stack_t*);
-stack_t *poptop(stack_t*, double*);
-double top(stack_t*);
+static char *strtrim(char*);
+static int parse_expression(char*);
+static int parse_operand(char*, double*);
+static int parse_operator(char);
+static void clearstack();
+static stack_t *push(stack_t*, double);
+static stack_t *pop(stack_t*);
+static stack_t *poptop(stack_t*, double*);
+static double top(stack_t*);
 
-static char *strtrim(char *str) {
+char *strtrim(char *str) {
   char *pch = str;
 
   if (str == NULL || *str == '\0')
@@ -78,7 +80,7 @@ static char *strtrim(char *str) {
 }
 
 /** stack operations */
-static void clearstack() {
+void clearstack() {
   if (opstack == NULL)
     return;
 
@@ -223,7 +225,7 @@ int parse_expression(char *expr) {
     } else if (*token == ':') {
       parse_precision(++token);
     } else { /* Hope this is an operand */
-      if (parse_operand(token, &operand) > 0)
+      if (parse_operand(token, &operand) > 0) /* Parse failed, error thrown, next expr */
         return CONTINUE;
 
       opstack = push(opstack, operand);
