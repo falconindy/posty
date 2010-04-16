@@ -116,10 +116,19 @@ int parse_operator(char operator) {
     case '+': op1 += op2; break;
     case '-': op1 -= op2; break;
     case '*': op1 *= op2; break;
-    case '/': op1 /= op2; break;
-    case '%': op1 = (int)op1 % (int)op2; break;
     case '^': op1 = pow(op1, op2); break;
-    default: return 1;
+    case '/': if (! op2) {
+                fprintf(stderr, "!! Divide by zero\n");
+                return 1;
+              }
+              op1 /= op2; 
+              break;
+    case '%': if (! op2) {
+                fprintf(stderr, "!! Divide by zero\n");
+                return 1;
+              }
+              op1 = (int)op1 % (int)op2; 
+              break;
   }
 
   if (verbose)
@@ -134,7 +143,7 @@ int parse_precision(char *p) {
   char *endPtr;
   int pre = (int)strtol(p, &endPtr, 10);
   if (endPtr != p + strlen(p)) {
-    fprintf(stderr, "! Bad precision specified\n");
+    fprintf(stderr, "!! Bad precision specified\n");
     return 1;
   } else {
     precision = pre;
@@ -161,29 +170,28 @@ int parse_expression(char *expr) {
 
     if (strchr(operators, *token) && strlen(token) == 1) { /* Caught an operator */
       if (stack_size < 2) {
-        fprintf(stderr, "! Malformed expression -- insufficient operands.\n");
+        fprintf(stderr, "!! Malformed expression -- insufficient operands.\n");
         return CONTINUE;
       }
       if (parse_operator(*token) > 0) { /* This should never be executed */
-        fprintf(stderr, "Unknown error occurred in parse_operator for token %s\n", token);
+        return CONTINUE;
       }
     } else if (*token == ':') {
       parse_precision(++token);
-      return CONTINUE;
     } else { /* Caught an operand, validate it */
       errno = 0;
       operand = strtod(token, &endPtr);
       if (errno != 0) {
         operand = fabs(operand);
         if (operand == HUGE_VAL)
-          fprintf(stderr, "! Input overflow.\n");
+          fprintf(stderr, "!! Input overflow.\n");
         if (operand == 0)
-          fprintf(stderr, "! Input underflow.\n");
+          fprintf(stderr, "!! Input underflow.\n");
 
         return CONTINUE;
       }
       if (token + strlen(token) != endPtr) {
-        fprintf(stderr, "! Bad input: %s\n", token);
+        fprintf(stderr, "!! Bad input: %s\n", token);
         return CONTINUE;
       }
       opstack = push(opstack, operand); /* passed validation, push onto stack */
@@ -191,7 +199,7 @@ int parse_expression(char *expr) {
   }
 
   if (stack_size > 1)
-    fprintf(stderr, "! Malformed expression -- excess operands.\n");
+    fprintf(stderr, "!! Malformed expression -- excess operands.\n");
   else if (stack_size == 1) {
     printf(" = %.*f\n", precision, top(opstack));
     opstack = pop(opstack);
