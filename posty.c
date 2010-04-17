@@ -139,13 +139,13 @@ int parse_operator(char operator) {
     return 1;
   }
 
-  if (stackptr != &opstack[STACK_SIZE])
-    *stackptr++ = op1;
-  else {
+  if (stackptr == &opstack[STACK_SIZE]) {
     fprintf(stderr, "!! Stack overflow. Expression too large.\n");
     resetstack();
     return 1;
   }
+
+  *stackptr++ = op1;
 
   return 0;
 }
@@ -193,13 +193,13 @@ int parse_expression(char *expr) {
       if (parse_operand(token, &operand) > 0) /* Parse failed, error thrown, next expr */
         return CONTINUE;
 
-      if (stackptr != &opstack[STACK_SIZE]) {
-        *stackptr++ = operand;
-      } else { /* Stack overflow! */
+      if (stackptr == &opstack[STACK_SIZE]) { /* Stack overflow */
         fprintf(stderr, "!! Stack overflow. Expression too large.\n");
         resetstack();
         return CONTINUE;
       }
+
+      *stackptr++ = operand;
     }
   }
 
@@ -219,7 +219,6 @@ int main(int argc, char *argv[]) {
   }
 
   char buf[BUFSIZ + 1];
-
   stackptr = &opstack[0];
 
   do {
