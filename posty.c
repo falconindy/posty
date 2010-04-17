@@ -31,14 +31,11 @@
 #define CONTINUE 1
 #define BREAK 0
 
-/* stack declaration */
-typedef struct __stack_t {
-  double data;
-  struct __stack_t *next;
-} stack_t;
+#define STACK_SIZE 512
 
-static stack_t *opstack = NULL;
-static int stack_size = 0;
+
+static double opstack[512] = {0};
+static double *stackptr;
 
 /* default runtime options */
 static int verbose = 0;
@@ -49,11 +46,7 @@ static char *strtrim(char*);
 static int parse_expression(char*);
 static int parse_operand(char*, double*);
 static int parse_operator(char);
-static void clearstack();
-static stack_t *push(stack_t*, double);
-static stack_t *pop(stack_t*);
-static stack_t *poptop(stack_t*, double*);
-static double top(stack_t*);
+static void resetstack();
 
 char *strtrim(char *str) {
   char *pch = str;
@@ -79,53 +72,19 @@ char *strtrim(char *str) {
   return str;
 }
 
-/** stack operations */
-void clearstack() {
-  if (opstack == NULL)
+void resetstack() {
+  if (stackptr == &opstack[0])
     return;
 
-  if (verbose)
+  if (verbose) {
     printf(":: Stack Dump :: ");
-  while (opstack) {
-    if (verbose)
-      printf("%.*f ", precision, top(opstack));
-    opstack = pop(opstack);
-  }
-  if (verbose)
+    while (stackptr != &opstack[0])
+      printf("%.*f ", precision, *--stackptr);
     putchar('\n');
+  } else
+    stackptr = &opstack[0];
+
 }
-
-stack_t *push(stack_t *stack, double data) {
-  stack_t *newnode = malloc(sizeof(stack_t));
-  newnode->data = data;
-  stack_size++;
-
-  if (stack == NULL)
-    newnode->next = NULL;
-  else
-    newnode->next = stack;
-
-  return newnode;
-}
-
-stack_t *pop(stack_t *stack) {
-  stack_t *tmpnode = stack->next;
-
-  free(stack);
-  stack_size--;
-
-  return tmpnode;
-}
-
-stack_t *poptop(stack_t *stack, double *op) {
-  *op = top(stack);
-  return pop(stack);
-}
-
-double top(stack_t *stack) {
-  return stack->data;
-}
-
 
 /** parse operations */
 int parse_operand(char *token, double *operand) {
@@ -147,8 +106,8 @@ int parse_operand(char *token, double *operand) {
 int parse_operator(char operator) {
   double op1, op2;
 
-  opstack = poptop(opstack, &op2);
-  opstack = poptop(opstack, &op1);
+  op2 = *--stackptr;
+  op1 = *--stackptr;
 
   if (verbose)
     printf(":: %.*f ", precision, op1);
@@ -180,7 +139,12 @@ int parse_operator(char operator) {
     return 1;
   }
 
-  opstack = push(opstack, op1); /* push result back onto stack */
+  if (stackptr != &opstack[STACK_SIZE])
+    *stackptr++ = op1;
+  else {
+    fprintf(stderr, "!! Stack overflow. Expression too large.\n");
+    resetstack();
+  }
 
   return 0;
 }
@@ -215,7 +179,7 @@ int parse_expression(char *expr) {
     if (strlen(token) == 0) continue;
 
     if (strchr(operators, *token) && strlen(token) == 1) { /* Caught an operator */
-      if (stack_size < 2) {
+      if (stackptr - opstack < 2) {
         fprintf(stderr, "!! Malformed expression -- insufficient operands.\n");
         return CONTINUE;
       }
@@ -228,15 +192,19 @@ int parse_expression(char *expr) {
       if (parse_operand(token, &operand) > 0) /* Parse failed, error thrown, next expr */
         return CONTINUE;
 
-      opstack = push(opstack, operand);
+      if (stackptr != &stackptr[STACK_SIZE])
+        *stackptr++ = operand;
+      else {
+        fprintf(stderr, "!! Stack overflow. Expression too large.\n");
+        resetstack();
+      }
     }
   }
 
-  if (stack_size > 1)
+  if (stackptr - opstack > 1)
     fprintf(stderr, "!! Malformed expression -- excess operands.\n");
-  else if (stack_size == 1) {
-    printf(" = %.*f\n", precision, top(opstack));
-    opstack = pop(opstack);
+  else if (stackptr - opstack == 1) {
+    printf(" = %.*f\n", precision, *--stackptr);
   }
 
   return CONTINUE;
@@ -252,8 +220,10 @@ int main(int argc, char *argv[]) {
   char *buf;
   buf = calloc(sizeof(char), BUFSIZ);
 
+  stackptr = &opstack[0];
+
   do {
-    clearstack();
+    resetstack();
     printf("> ");
     *buf = '\0';
     fgets(buf, BUFSIZ, stdin);
