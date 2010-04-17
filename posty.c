@@ -186,15 +186,15 @@ int parse_expression(char *expr) {
       if (parse_operator(*token) > 0) {
         return CONTINUE;
       }
-    } else if (*token == ':') {
+    } else if (*token == ':')
       parse_precision(++token);
-    } else { /* Hope this is an operand */
+    else { /* Hope this is an operand */
       if (parse_operand(token, &operand) > 0) /* Parse failed, error thrown, next expr */
         return CONTINUE;
 
-      if (stackptr != &stackptr[STACK_SIZE])
+      if (stackptr != &opstack[STACK_SIZE]) {
         *stackptr++ = operand;
-      else { /* Stack overflow! */
+      } else { /* Stack overflow! */
         fprintf(stderr, "!! Stack overflow. Expression too large.\n");
         resetstack();
         return CONTINUE;
