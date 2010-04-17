@@ -139,12 +139,6 @@ int parse_operator(char operator) {
     return 1;
   }
 
-  if (stackptr == &opstack[STACK_SIZE]) {
-    fprintf(stderr, "!! Stack overflow. Expression too large.\n");
-    resetstack();
-    return 1;
-  }
-
   *stackptr++ = op1;
 
   return 0;
@@ -198,7 +192,6 @@ int parse_expression(char *expr) {
 
       if (stackptr == &opstack[STACK_SIZE]) { /* stack overflow */
         fprintf(stderr, "!! Stack overflow. Expression too large.\n");
-        resetstack();
         return CONTINUE;
       }
 
