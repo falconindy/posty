@@ -31,7 +31,7 @@
 #define CONTINUE 1
 #define BREAK 0
 
-#define STACK_SIZE 128
+#define STACK_SIZE 64
 
 /* operand stack */
 static double opstack[STACK_SIZE];
@@ -76,12 +76,12 @@ void resetstack() {
   if (stackptr == &opstack[0])
     return;
 
-  if (verbose) {
+  if (verbose) { /* Dump individual items on the stack */
     printf(":: Stack Dump :: ");
     while (stackptr != &opstack[0])
       printf("%.*f ", precision, *--stackptr);
     putchar('\n');
-  } else
+  } else /* Just reset the pointer */
     stackptr = &opstack[0];
 
 }
@@ -117,17 +117,17 @@ int parse_operator(char operator) {
     case '-': op1 -= op2; break;
     case '*': op1 *= op2; break;
     case '^': op1 = pow(op1, op2); break;
-    case '/': if (! op2) {
+    case '/': if (op2 == 0) {
                 fprintf(stderr, "!! Divide by zero\n");
                 return 1;
               }
               op1 /= op2; 
               break;
-    case '%': if (! op2) {
+    case '%': if (op2 == 0) {
                 fprintf(stderr, "!! Divide by zero\n");
                 return 1;
               }
-              op1 = (int)op1 % (int)op2; 
+              op1 = (int)op1 % (int)op2;
               break;
   }
 
@@ -152,12 +152,15 @@ int parse_operator(char operator) {
 
 int parse_precision(char *p) {
   char *endPtr;
-  int pre = (int)strtol(p, &endPtr, 10);
+  int pre;
+
+  pre = (int)strtol(p, &endPtr, 10);
   if (endPtr != p + strlen(p)) {
     fprintf(stderr, "!! Bad precision specified\n");
     return 1;
   } else {
     precision = pre;
+
     if (precision < 0) /* clamp negative numbers to 0 */
       precision ^= precision;
     printf(":: Precision set to %d decimal places.\n", precision);
@@ -168,8 +171,7 @@ int parse_precision(char *p) {
 }
 
 int parse_expression(char *expr) {
-
-  if (strlen(strtrim(expr)) == 0)
+  if (strlen(strtrim(expr)) == 0) /* empty string passed, we're done */
     return BREAK;
 
   char *token;
@@ -179,21 +181,22 @@ int parse_expression(char *expr) {
   while ((token = strsep(&expr, " \n"))) {
     if (strlen(token) == 0) continue;
 
-    if (strchr(operators, *token) && strlen(token) == 1) { /* Caught an operator */
+    if (*token == ':') /* precision specified */
+      parse_precision(++token);
+    else if (strchr(operators, *token) && strlen(token) == 1) { /* operator */
       if (stackptr - opstack < 2) {
-        fprintf(stderr, "!! Malformed expression -- insufficient operands.\n");
+        fprintf(stderr, "!! Malformed expression -- too few operands.\n");
         return CONTINUE;
       }
+
       if (parse_operator(*token) > 0) {
         return CONTINUE;
       }
-    } else if (*token == ':')
-      parse_precision(++token);
-    else { /* Hope this is an operand */
-      if (parse_operand(token, &operand) > 0) /* Parse failed, error thrown, next expr */
+    } else { /* it's an operand, or it's bad input */
+      if (parse_operand(token, &operand) > 0) /* parsing failed on bad input */
         return CONTINUE;
 
-      if (stackptr == &opstack[STACK_SIZE]) { /* Stack overflow */
+      if (stackptr == &opstack[STACK_SIZE]) { /* stack overflow */
         fprintf(stderr, "!! Stack overflow. Expression too large.\n");
         resetstack();
         return CONTINUE;
@@ -204,7 +207,7 @@ int parse_expression(char *expr) {
   }
 
   if (stackptr - opstack > 1)
-    fprintf(stderr, "!! Malformed expression -- excess operands.\n");
+    fprintf(stderr, "!! Malformed expression -- too many operands.\n");
   else if (stackptr - opstack == 1) {
     printf(" = %.*f\n", precision, *--stackptr);
   }
@@ -213,13 +216,14 @@ int parse_expression(char *expr) {
 }
 
 int main(int argc, char *argv[]) {
+  char buf[BUFSIZ + 1];
+
   if (argc > 1 && strcmp(argv[1], "-v") == 0) {
     fprintf(stderr, "::Stack dumps enabled::\n");
     verbose = 1;
   }
 
-  char buf[BUFSIZ + 1];
-  stackptr = &opstack[0];
+  stackptr = &opstack[0]; /* initialize stack */
 
   do {
     resetstack();
