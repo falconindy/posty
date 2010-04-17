@@ -31,10 +31,9 @@
 #define CONTINUE 1
 #define BREAK 0
 
-#define STACK_SIZE 512
+#define STACK_SIZE 128
 
-
-static double opstack[512] = {0};
+static double opstack[STACK_SIZE] = {0};
 static double *stackptr;
 
 /* default runtime options */
@@ -144,6 +143,7 @@ int parse_operator(char operator) {
   else {
     fprintf(stderr, "!! Stack overflow. Expression too large.\n");
     resetstack();
+    return 1;
   }
 
   return 0;
@@ -194,9 +194,10 @@ int parse_expression(char *expr) {
 
       if (stackptr != &stackptr[STACK_SIZE])
         *stackptr++ = operand;
-      else {
+      else { /* Stack overflow! */
         fprintf(stderr, "!! Stack overflow. Expression too large.\n");
         resetstack();
+        return CONTINUE;
       }
     }
   }
