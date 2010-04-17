@@ -33,7 +33,8 @@
 
 #define STACK_SIZE 128
 
-static double opstack[STACK_SIZE] = {0};
+/* operand stack */
+static double opstack[STACK_SIZE];
 static double *stackptr;
 
 /* default runtime options */
@@ -211,26 +212,23 @@ int parse_expression(char *expr) {
   return CONTINUE;
 }
 
-
 int main(int argc, char *argv[]) {
   if (argc > 1 && strcmp(argv[1], "-v") == 0) {
     fprintf(stderr, "::Stack dumps enabled::\n");
     verbose = 1;
   }
 
-  char *buf;
-  buf = calloc(sizeof(char), BUFSIZ);
+  char buf[BUFSIZ + 1];
 
   stackptr = &opstack[0];
 
   do {
     resetstack();
     printf("> ");
-    *buf = '\0';
+    buf[0] = '\0';
     fgets(buf, BUFSIZ, stdin);
   } while (parse_expression(buf));
 
-  free(buf);
-
   return 0;
 }
+
