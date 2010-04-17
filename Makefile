@@ -5,7 +5,7 @@ LDFLAGS=-lm
 all: posty
 
 posty: posty.c $(OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) $< $(OBJ) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
 
 clean:
 	@rm posty
