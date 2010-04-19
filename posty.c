@@ -223,7 +223,7 @@ int main(int argc, char *argv[]) {
   if (!isatty(fileno(stdin))) {
     fgets(buf, BUFSIZ, stdin);
     parse_expression(buf);
-    /* freopen(ctermid(NULL), "r", stdin); */
+    freopen(ctermid(NULL), "r", stdin);
     return 0;
   }
 
