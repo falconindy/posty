@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define CONTINUE 1
 #define BREAK 0
@@ -217,6 +218,14 @@ int main(int argc, char *argv[]) {
   }
 
   stackptr = &opstack[0]; /* initialize stack */
+
+  /* If stdin has data, hit it and quit it */
+  if (!isatty(fileno(stdin))) {
+    fgets(buf, BUFSIZ, stdin);
+    parse_expression(buf);
+    /* freopen(ctermid(NULL), "r", stdin); */
+    return 0;
+  }
 
   do {
     resetstack();
