@@ -95,7 +95,7 @@ int parse_operand(char *token, double *operand) {
     fprintf(stderr, "!! Input overflow.\n");
     return 1;
   }
-  if (token + strlen(token) != endPtr) {
+  if (*endPtr != '\0') {
     fprintf(stderr, "!! Bad input: %s\n", token);
     return 1;
   }
@@ -149,7 +149,7 @@ int parse_precision(char *p) {
   int pre;
 
   pre = (int)strtol(p, &endPtr, 10);
-  if (endPtr != p + strlen(p)) {
+  if (*endPtr != '\0') {
     fprintf(stderr, "!! Bad precision specified\n");
     return 1;
   } else {
