@@ -23,6 +23,7 @@
  */
 
 #include <ctype.h>
+#include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,6 +34,8 @@
 #define BREAK 0
 
 #define STACK_SIZE 64
+
+#define DOUBLE_EQ(x,v) (((v - DBL_EPSILON) < x) && (x <( v + DBL_EPSILON)))
 
 /* operand stack */
 static double opstack[STACK_SIZE];
@@ -77,7 +80,7 @@ void resetstack() {
   if (stackptr == &opstack[0])
     return;
 
-  if (verbose) { /* Dump individual items on the stack */
+  if (verbose == 1) { /* Dump individual items on the stack */
     printf(":: Stack Dump :: ");
     while (stackptr != &opstack[0])
       printf("%.*f ", precision, *--stackptr);
@@ -92,7 +95,7 @@ int parse_operand(char *token, double *operand) {
   char *endPtr;
 
   *operand = strtod(token, &endPtr);
-  if (*operand == HUGE_VAL) {
+  if (DOUBLE_EQ(*operand, HUGE_VAL)) {
     fprintf(stderr, "!! Input overflow.\n");
     return 1;
   }
@@ -110,7 +113,7 @@ int parse_operator(char operator) {
   op2 = *--stackptr;
   op1 = *--stackptr;
 
-  if (verbose)
+  if (verbose == 1)
     printf(":: %.*f ", precision, op1);
 
   switch (operator) {
@@ -118,13 +121,13 @@ int parse_operator(char operator) {
     case '-': op1 -= op2; break;
     case '*': op1 *= op2; break;
     case '^': op1 = pow(op1, op2); break;
-    case '/': if (op2 == 0) {
+    case '/': if (DOUBLE_EQ(op2, 0)) {
                 fprintf(stderr, "!! Divide by zero\n");
                 return 1;
               }
               op1 /= op2; 
               break;
-    case '%': if (op2 == 0) {
+    case '%': if (DOUBLE_EQ(op2, 0) || (int)op2 == 0) {
                 fprintf(stderr, "!! Divide by zero\n");
                 return 1;
               }
@@ -132,10 +135,10 @@ int parse_operator(char operator) {
               break;
   }
 
-  if (verbose)
+  if (verbose == 1)
     printf("%c %.*f = %.*f\n", operator, precision, op2, precision, op1);
 
-  if (op1 == HUGE_VAL) {
+  if (DOUBLE_EQ(op1, HUGE_VAL)) {
     fprintf(stderr, "!! Result overflow\n");
     return 1;
   }
