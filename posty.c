@@ -48,8 +48,8 @@ static int precision = 3;
 /* protos */
 static char *strtrim(char*);
 static int parse_expression(char*);
-static int parse_operand(char*, double*);
-static int parse_operator(char);
+static int parse_operand(const char*, double*);
+static int parse_operator(const char);
 static void resetstack();
 
 char *strtrim(char *str) {
@@ -91,7 +91,7 @@ void resetstack() {
 }
 
 /** parse operations */
-int parse_operand(char *token, double *operand) {
+int parse_operand(const char *token, double *operand) {
   char *endPtr;
 
   *operand = strtod(token, &endPtr);
@@ -107,7 +107,7 @@ int parse_operand(char *token, double *operand) {
   return 0;
 }
 
-int parse_operator(char operator) {
+int parse_operator(const char operator) {
   double op1, op2;
 
   op2 = *--stackptr;
@@ -148,7 +148,7 @@ int parse_operator(char operator) {
   return 0;
 }
 
-int parse_precision(char *p) {
+int parse_precision(const char *p) {
   char *endPtr;
   int pre;
 
