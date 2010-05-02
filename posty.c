@@ -26,11 +26,12 @@
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
-#include <readline/readline.h>
-#include <readline/history.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+#include <readline/history.h>
+#include <readline/readline.h>
 
 #define CONTINUE 1
 #define BREAK 0
