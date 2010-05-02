@@ -26,6 +26,8 @@
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -169,7 +171,7 @@ int parse_precision(const char *p) {
 }
 
 int parse_expression(char *expr) {
-  if (strlen(strtrim(expr)) == 0) /* empty string passed, we're done */
+  if (strlen(strtrim(expr)) == 0)
     return BREAK;
 
   char *token;
@@ -213,7 +215,7 @@ int parse_expression(char *expr) {
 }
 
 int main(int argc, char *argv[]) {
-  char buf[BUFSIZ + 1];
+  char *buf, line[BUFSIZ + 1];
 
   if (argc > 1 && strcmp(argv[1], "-v") == 0) {
     fprintf(stderr, "::Stack dumps enabled::\n");
@@ -224,19 +226,24 @@ int main(int argc, char *argv[]) {
 
   /* If stdin has data, hit it and quit it */
   if (!isatty(fileno(stdin))) {
-    fgets(buf, BUFSIZ, stdin);
-    parse_expression(buf);
+    fgets(line, BUFSIZ, stdin);
+    parse_expression(line);
     freopen(ctermid(NULL), "r", stdin);
     return 0;
   }
 
-  do {
+  /* going interactive. fire up readline */
+  using_history();
+
+  while ((buf = readline("> ")) != NULL) {
+    add_history(buf);
+    strcpy(line, buf);
+    parse_expression(line);
     stack_reset();
-    printf("> ");
-    buf[0] = '\0';
-    fgets(buf, BUFSIZ, stdin);
-  } while (parse_expression(buf));
+    free(buf);
+  }
+
+  clear_history();
 
   return 0;
 }
-

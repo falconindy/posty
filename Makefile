@@ -1,6 +1,6 @@
-CC=gcc -std=c99 -Wall -pedantic
-CFLAGS=-pipe -O2 -D_GNU_SOURCE
-LDFLAGS=-lm
+CC=gcc -std=c99 -Wall -pedantic -g
+CFLAGS=-pipe -D_GNU_SOURCE
+LDFLAGS=-lm -lreadline
 
 all: posty
 
