@@ -50,7 +50,7 @@ static char *strtrim(char*);
 static int parse_expression(char*);
 static int parse_operand(const char*, double*);
 static int parse_operator(const char);
-static void resetstack();
+static void stack_reset();
 
 char *strtrim(char *str) {
   char *pch = str;
@@ -76,7 +76,7 @@ char *strtrim(char *str) {
   return str;
 }
 
-void resetstack() {
+void stack_reset() {
   if (stackptr == &opstack[0])
     return;
 
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
   }
 
   do {
-    resetstack();
+    stack_reset();
     printf("> ");
     buf[0] = '\0';
     fgets(buf, BUFSIZ, stdin);
