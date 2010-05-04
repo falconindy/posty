@@ -62,8 +62,10 @@ char *strtrim(char *str) {
 char *strlower(char *str) {
   char *pch = str;
 
-  while (*pch != '\0')
-    *pch++ = tolower(*pch);
+  while (*pch != '\0') {
+    *pch = tolower(*pch);
+    pch++;
+  }
 
   return str;
 }
