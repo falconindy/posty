@@ -62,9 +62,8 @@ char *strtrim(char *str) {
 char *strlower(char *str) {
   char *pch = str;
 
-  while (*pch++ != '\0')
-    if (*pch >= 65 && *pch <= 90)
-      *pch += 32;
+  while (*pch != '\0')
+    *pch++ = tolower(*pch);
 
   return str;
 }
@@ -220,7 +219,7 @@ int parse_expression(char *expr) {
       if (parse_operator(*token) > 0) {
         return CONTINUE;
       }
-    } else if ((ptr = strcasestr(trigfunc, strlower(token))) != NULL &&
+    } else if ((ptr = strstr(trigfunc, strlower(token))) != NULL &&
               *(ptr - 1) == '|' && *(ptr + strlen(token)) == '|') {
       /* validated trig function */
       if (stackptr - opstack < 1) {
@@ -228,7 +227,7 @@ int parse_expression(char *expr) {
         return CONTINUE;
       }
       parse_trig(token);
-    } else if ((ptr = strcasestr(constants, strlower(token))) != NULL &&
+    } else if ((ptr = strstr(constants, strlower(token))) != NULL &&
               *(ptr - 1) == '|' && *(ptr + strlen(token)) == '|') {
       /* validated constant */
       parse_constant(token);
