@@ -33,27 +33,7 @@
 #include <readline/history.h>
 #include <readline/readline.h>
 
-#define CONTINUE 1
-#define BREAK 0
-
-#define STACK_SIZE 64
-
-#define DOUBLE_EQ(x,v) (((v - DBL_EPSILON) < x) && (x <( v + DBL_EPSILON)))
-
-/* operand stack */
-static double opstack[STACK_SIZE];
-static double *stackptr;
-
-/* default runtime options */
-static int verbose = 0;
-static int precision = 3;
-
-/* protos */
-static char *strtrim(char*);
-static int parse_expression(char*);
-static int parse_operand(const char*, double*);
-static int parse_operator(const char);
-static void stack_reset();
+#include "posty.h"
 
 char *strtrim(char *str) {
   char *pch = str;
@@ -171,13 +151,43 @@ int parse_precision(const char *p) {
 
 }
 
+int parse_trig(char *trigfunc) {
+  double op1;
+  double res;
+
+  op1 = *--stackptr;
+
+  if (strcmp(trigfunc, "sin") == 0)
+    res = sin(op1);
+  else if (strcmp(trigfunc, "cos") == 0)
+    res = cos(op1);
+  else if (strcmp(trigfunc, "tan") == 0)
+    res = tan(op1);
+  else if (strcmp(trigfunc, "asin") == 0)
+    res = asin(op1);
+  else if (strcmp(trigfunc, "acos") == 0)
+    res = acos(op1);
+  else if (strcmp(trigfunc, "atan") == 0)
+    res = atan(op1);
+
+  if (verbose == 1)
+    printf("%s(%.*f) = %.*f\n", trigfunc, precision, op1, precision, res);
+
+  *stackptr++ = res;
+
+  return 0;
+}
+
 int parse_expression(char *expr) {
   if (strlen(strtrim(expr)) == 0)
     return BREAK;
 
   char *token;
   static const char *operators = "+/*-%^";
+  static const char *trigfunc = "|sin|cos|tan|asin|acos|atan|";
+  /* static const char *constants = "|e|pi|"; */
   double operand;
+  char *ptr;
 
   while ((token = strsep(&expr, " \n"))) {
     if (strlen(token) == 0) continue;
@@ -193,6 +203,14 @@ int parse_expression(char *expr) {
       if (parse_operator(*token) > 0) {
         return CONTINUE;
       }
+    } else if ((ptr = strcasestr(trigfunc, token)) != NULL &&
+              *(ptr - 1) == '|' && *(ptr + strlen(token)) == '|') {
+      /* validated trig function */
+      if (stackptr - opstack < 1) {
+        fprintf(stderr, "!! Malformed expression -- too few operands.\n");
+        return CONTINUE;
+      }
+      parse_trig(token);
     } else { /* it's an operand, or it's bad input */
       if (parse_operand(token, &operand) > 0) /* parsing failed on bad input */
         return CONTINUE;
