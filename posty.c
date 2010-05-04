@@ -189,6 +189,8 @@ int parse_mfunc(char *mfunc) {
     res = atan(op1);
   else if (strcmp(mfunc, "sqrt") == 0)
     res = sqrt(op1);
+  else if (strcmp(mfunc, "ln") == 0)
+    res = log(op1);
 
   if (verbose == 1)
     printf("%s(%.*f) = %.*f\n", mfunc, precision, op1, precision, res);
@@ -204,7 +206,7 @@ int parse_expression(char *expr) {
 
   char *token;
   static const char *operators = "+/*-%^";
-  static const char *mfuncs = "|sqrt|sin|cos|tan|asin|acos|atan|";
+  static const char *mfuncs = "|ln|sqrt|sin|cos|tan|asin|acos|atan|";
   static const char *constants = "|e|pi|";
   double operand;
   char *ptr;
