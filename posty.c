@@ -59,6 +59,16 @@ char *strtrim(char *str) {
   return str;
 }
 
+char *strlower(char *str) {
+  char *pch = str;
+
+  while (*pch++ != '\0')
+    if (*pch >= 65 && *pch <= 90)
+      *pch += 32;
+
+  return str;
+}
+
 void stack_reset() {
   if (stackptr == &opstack[0])
     return;
@@ -70,10 +80,18 @@ void stack_reset() {
     putchar('\n');
   } else /* Just reset the pointer */
     stackptr = &opstack[0];
-
 }
 
 /** parse operations */
+int parse_constant(const char *constant) {
+  if (strcmp(constant, "pi") == 0)
+    *stackptr++ = PI;
+  else if (strcmp(constant, "e") == 0)
+    *stackptr++ = E;
+
+  return 0;
+}
+
 int parse_operand(const char *token, double *operand) {
   char *endPtr;
 
@@ -148,7 +166,6 @@ int parse_precision(const char *p) {
   }
 
   return 0;
-
 }
 
 int parse_trig(char *trigfunc) {
@@ -185,7 +202,7 @@ int parse_expression(char *expr) {
   char *token;
   static const char *operators = "+/*-%^";
   static const char *trigfunc = "|sin|cos|tan|asin|acos|atan|";
-  /* static const char *constants = "|e|pi|"; */
+  static const char *constants = "|e|pi|";
   double operand;
   char *ptr;
 
@@ -203,7 +220,7 @@ int parse_expression(char *expr) {
       if (parse_operator(*token) > 0) {
         return CONTINUE;
       }
-    } else if ((ptr = strcasestr(trigfunc, token)) != NULL &&
+    } else if ((ptr = strcasestr(trigfunc, strlower(token))) != NULL &&
               *(ptr - 1) == '|' && *(ptr + strlen(token)) == '|') {
       /* validated trig function */
       if (stackptr - opstack < 1) {
@@ -211,6 +228,10 @@ int parse_expression(char *expr) {
         return CONTINUE;
       }
       parse_trig(token);
+    } else if ((ptr = strcasestr(constants, strlower(token))) != NULL &&
+              *(ptr - 1) == '|' && *(ptr + strlen(token)) == '|') {
+      /* validated constant */
+      parse_constant(token);
     } else { /* it's an operand, or it's bad input */
       if (parse_operand(token, &operand) > 0) /* parsing failed on bad input */
         return CONTINUE;
