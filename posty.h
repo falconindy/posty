@@ -44,12 +44,9 @@ static char *strlower(char*);
 static int parse_expression(char*);
 static int parse_operand(const char*, double*);
 static int parse_operator(const char);
-static int parse_trig(char*);
+static int parse_mfunc(char*);
 static void stack_reset();
 
 #define DOUBLE_EQ(x,v) (((v - DBL_EPSILON) < x) && (x <( v + DBL_EPSILON)))
-
-#define PI  3.14159265359
-#define E   2.71828182846
 
 #endif /* _POSTY_H */

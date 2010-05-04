@@ -84,9 +84,9 @@ void stack_reset() {
 /** parse operations */
 int parse_constant(const char *constant) {
   if (strcmp(constant, "pi") == 0)
-    *stackptr++ = PI;
+    *stackptr++ = M_PI;
   else if (strcmp(constant, "e") == 0)
-    *stackptr++ = E;
+    *stackptr++ = M_E;
 
   return 0;
 }
@@ -167,27 +167,29 @@ int parse_precision(const char *p) {
   return 0;
 }
 
-int parse_trig(char *trigfunc) {
+int parse_mfunc(char *mfunc) {
   double op1;
   double res;
 
   op1 = *--stackptr;
 
-  if (strcmp(trigfunc, "sin") == 0)
+  if (strcmp(mfunc, "sin") == 0)
     res = sin(op1);
-  else if (strcmp(trigfunc, "cos") == 0)
+  else if (strcmp(mfunc, "cos") == 0)
     res = cos(op1);
-  else if (strcmp(trigfunc, "tan") == 0)
+  else if (strcmp(mfunc, "tan") == 0)
     res = tan(op1);
-  else if (strcmp(trigfunc, "asin") == 0)
+  else if (strcmp(mfunc, "asin") == 0)
     res = asin(op1);
-  else if (strcmp(trigfunc, "acos") == 0)
+  else if (strcmp(mfunc, "acos") == 0)
     res = acos(op1);
-  else if (strcmp(trigfunc, "atan") == 0)
+  else if (strcmp(mfunc, "atan") == 0)
     res = atan(op1);
+  else if (strcmp(mfunc, "sqrt") == 0)
+    res = sqrt(op1);
 
   if (verbose == 1)
-    printf("%s(%.*f) = %.*f\n", trigfunc, precision, op1, precision, res);
+    printf("%s(%.*f) = %.*f\n", mfunc, precision, op1, precision, res);
 
   *stackptr++ = res;
 
@@ -200,7 +202,7 @@ int parse_expression(char *expr) {
 
   char *token;
   static const char *operators = "+/*-%^";
-  static const char *trigfunc = "|sin|cos|tan|asin|acos|atan|";
+  static const char *mfuncs = "|sqrt|sin|cos|tan|asin|acos|atan|";
   static const char *constants = "|e|pi|";
   double operand;
   char *ptr;
@@ -219,14 +221,14 @@ int parse_expression(char *expr) {
       if (parse_operator(*token) > 0) {
         return CONTINUE;
       }
-    } else if ((ptr = strstr(trigfunc, strlower(token))) != NULL &&
+    } else if ((ptr = strstr(mfuncs, strlower(token))) != NULL &&
               *(ptr - 1) == '|' && *(ptr + strlen(token)) == '|') {
       /* validated trig function */
       if (stackptr - opstack < 1) {
         fprintf(stderr, "!! Malformed expression -- too few operands.\n");
         return CONTINUE;
       }
-      parse_trig(token);
+      parse_mfunc(token);
     } else if ((ptr = strstr(constants, strlower(token))) != NULL &&
               *(ptr - 1) == '|' && *(ptr + strlen(token)) == '|') {
       /* validated constant */
