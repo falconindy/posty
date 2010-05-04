@@ -7,5 +7,7 @@ pre. posty [-v]
 
 In interactive mode, you have two choices:
 * Enter a postfix style expression to be evaluated (supports +, -, /, *, ^, %)
+* Advanced functions: sqrt, sin, cos, tan, asin, acos, atan
+* Support for constants: pi and e
 * Enter :N to set decimal precision, where N is the number of digits displayed to the right of the decimal. Note that this can also be part of an expression.
 
