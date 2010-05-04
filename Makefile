@@ -4,7 +4,7 @@ LDFLAGS=-lm -lreadline
 
 all: posty
 
-posty: posty.c
+posty: posty.c posty.h
 	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
 
 clean:
