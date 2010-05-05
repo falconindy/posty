@@ -97,12 +97,11 @@ int parse_operand(const char *token, double *operand) {
   char *endPtr;
 
   *operand = strtod(token, &endPtr);
-  if (DOUBLE_EQ(*operand, HUGE_VAL)) {
-    fprintf(stderr, "!! Input overflow.\n");
-    return 1;
-  }
   if (*endPtr != '\0') {
     fprintf(stderr, "!! Bad input: %s\n", token);
+    return 1;
+  } else if (DOUBLE_EQ(*operand, HUGE_VAL)) {
+    fprintf(stderr, "!! Input overflow.\n");
     return 1;
   }
 
