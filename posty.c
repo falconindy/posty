@@ -74,7 +74,7 @@ void stack_reset() {
   if (stackptr == &opstack[0])
     return;
 
-  if (verbose == 1) { /* Dump individual items on the stack */
+  if (verbose >= 2) { /* Dump individual items on the stack */
     printf(":: Stack Dump :: ");
     while (stackptr != &opstack[0])
       printf("%.*f ", precision, *--stackptr);
@@ -114,7 +114,7 @@ int parse_operator(const char operator) {
   op2 = *--stackptr;
   op1 = *--stackptr;
 
-  if (verbose == 1)
+  if (verbose >= 2)
     printf(":: %.*f ", precision, op1);
 
   switch (operator) {
@@ -136,7 +136,7 @@ int parse_operator(const char operator) {
               break;
   }
 
-  if (verbose == 1)
+  if (verbose >= 2)
     printf("%c %.*f = %.*f\n", operator, precision, op2, precision, op1);
 
   if (DOUBLE_EQ(op1, HUGE_VAL)) {
@@ -162,7 +162,9 @@ int parse_precision(const char *p) {
 
     if (precision < 0) /* clamp negative numbers to 0 */
       precision ^= precision;
-    printf(":: Precision set to %d decimal places.\n", precision);
+
+    if (verbose >= 1)
+      printf(":: Precision set to %d decimal places.\n", precision);
   }
 
   return 0;
@@ -191,7 +193,7 @@ int parse_mfunc(char *mfunc) {
   else if (strcmp(mfunc, "ln") == 0)
     res = log(op1);
 
-  if (verbose == 1)
+  if (verbose >= 2)
     printf("%s(%.*f) = %.*f\n", mfunc, precision, op1, precision, res);
 
   *stackptr++ = res;
@@ -252,7 +254,10 @@ int parse_expression(char *expr) {
   if (stackptr - opstack > 1)
     fprintf(stderr, "!! Malformed expression -- too many operands.\n");
   else if (stackptr - opstack == 1) {
-    printf(" = %.*f\n", precision, *--stackptr);
+    if (verbose >= 1)
+      printf(" = %.*f\n", precision, *--stackptr);
+    else
+      printf("%.*f\n", precision, *--stackptr);
   }
 
   return CONTINUE;
@@ -263,7 +268,7 @@ int main(int argc, char *argv[]) {
 
   if (argc > 1 && strcmp(argv[1], "-v") == 0) {
     fprintf(stderr, "::Stack dumps enabled::\n");
-    verbose = 1;
+    verbose = 2;
   }
 
   stackptr = &opstack[0]; /* initialize stack */
