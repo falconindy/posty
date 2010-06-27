@@ -291,6 +291,7 @@ int main(int argc, char *argv[]) {
     stack_reset();
     free(buf);
   }
+  putchar('\n');
 
   clear_history();
 
